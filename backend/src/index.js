@@ -50,9 +50,9 @@ app.get('/api', (req, res) => {
     });
 });
 
-// Redirect root to the main admin page
+// Redirect root to the login / landing page
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../public_html/admin/regUser.html'));
+    res.sendFile(path.join(__dirname, '../../public_html/admin/initPag.html'));
 });
 
 // 7. Start Server

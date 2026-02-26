@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Registrarse — TechSide</title>
+  <title>Registro de Personal — Gestión</title>
   <link rel="stylesheet" href="../css/universalCss.css" type="text/css">
   <link rel="stylesheet" href="../css/divs.css" type="text/css">
   <link rel="stylesheet" href="../css/initSes.css" type="text/css">
@@ -20,38 +20,7 @@
   .form-message.error { background:#fff1f2; color:#7f1d1d; border:1px solid #fecaca }
 </style>
 
-    <div id="login-modal" class="login-modal" onclick="closeOnOutsideClick(event)">
-      <div class="login-content">
-        <span class="close" onclick="document.getElementById('login-modal').style.display='none'">&times;</span>
-        <img src="https://cdn.animeav1.com/backdrops/2067.jpg" alt="Banner Login" class="login-banner">
-        <form class="login-form">
-          <h2>Iniciar Sesión</h2>
-          <input type="text" placeholder="Usuario">
-          <input type="password" placeholder="Contraseña">
-          <button type="submit">Entrar</button>
-        </form>
-      </div>
-    </div>
-
-    <script> 
-        function openLogin() {
-          document.getElementById('login-modal').style.display = 'flex';
-        }
-
-        function closeLogin() {
-          document.getElementById('login-modal').style.display = 'none';
-        }
-
-        // Cierra si se hace clic fuera del cuadro de login
-        function closeOnOutsideClick(event) {
-          const modal = document.getElementById('login-modal');
-          const box = modal.querySelector('.login-box');
-
-          if (!box.contains(event.target)) {
-            closeLogin();
-          }
-        }
-        
+    <script>
         function regValNum(event) {
         const numeros = "1234567890";
         const tecla = String.fromCharCode(event.which || event.keyCode);
@@ -69,10 +38,16 @@
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="/">Clinica</a>
+      <a class="brand" href="../initPag.html">Gestión de Personal</a>
       <nav class="main-nav" aria-label="Navegación principal">
         <a href="initPag.html">Inicio</a>
-
+        <a href="dashboard.html">Dashboard</a>
+        <a href="formAgregar.html" class="active">Registrar personal</a>
+      </nav>
+      <div class="header-actions">
+        <span id="user-name-display" style="margin-right:12px;"></span>
+        <button class="btn-ghost" onclick="cerrarSesion()">Salir</button>
+      </div>
     </div>
   </header>
 
@@ -81,10 +56,9 @@
 
                 <!-- Registro -->
                 <div class="reg-card">
-                  <h2>Regístrate</h2>
+                  <h2>Registro de Personal</h2>
                   <div id="register-message" class="form-message" aria-live="polite"></div>
                   <form method="post" action="#register" class="form-size" enctype="multipart/form-data">
-                    <input type="hidden" name="role" value="cliente">
 
                     <label>
                       Usuario
@@ -184,41 +158,30 @@
                       <input type="file" name="proof_id" accept="image/*,application/pdf" >
                     </label>
 
-                    <div style="display:grid;grid-template-columns:1fr;gap:8px">
-                      <div>
-                        <label>Persona de contacto 1</label>
-                        <input type="text" name="contact_name_1" placeholder="Nombre" onkeypress="return regValText(event)">
-                        <select name="contact_rel_1">
-                          <option value="">Parentesco</option>
-                          <option>Familiar</option>
-                          <option>Vecino</option>
-                          <option>Amigo</option>
-                        </select>
-                        <input type="tel" name="contact_phone_1" placeholder="Teléfono" onkeypress="return regValNum(event)">
-                      </div>
-                      <div>
-                        <label>Persona de contacto 2</label>
-                        <input type="text" name="contact_name_2" placeholder="Nombre" onkeypress="return regValText(event)">
-                        <select name="contact_rel_2">
-                          <option value="">Parentesco</option>
-                          <option>Familiar</option>
-                          <option>Vecino</option>
-                          <option>Amigo</option>
-                        </select>
-                        <input type="tel" name="contact_phone_2" placeholder="Teléfono" onkeypress="return regValNum(event)">
-                      </div>
-                      <div>
-                        <label>Persona de contacto 3</label>
-                        <input type="text" name="contact_name_3" placeholder="Nombre" onkeypress="return regValText(event)">
-                        <select name="contact_rel_3">
-                          <option value="">Parentesco</option>
-                          <option>Familiar</option>
-                          <option>Vecino</option>
-                          <option>Amigo</option>
-                        </select>
-                        <input type="tel" name="contact_phone_3" placeholder="Teléfono" onkeypress="return regValNum(event)">
-                      </div>
-                    </div>
+                    <!-- Campos adicionales de personal -->
+                    <label>
+                      Tipo de contrato
+                      <select name="tipo_contrato" required>
+                        <option value="Empleado">Empleado</option>
+                        <option value="Voluntario">Voluntario</option>
+                      </select>
+                    </label>
+                    <label>
+                      Rol profesional
+                      <select name="rol" required>
+                        <option value="">-- Selecciona rol --</option>
+                        <option value="Director">Director</option>
+                        <option value="Coordinador">Coordinador</option>
+                        <option value="Psicólogo">Psicólogo</option>
+                        <option value="Doctor">Doctor</option>
+                        <option value="Abogado">Abogado</option>
+                        <option value="Trabajador Social">Trabajador Social</option>
+                        <option value="Analista">Analista</option>
+                      </select>
+                    </label>
+
+                    <!-- Área para campos condicionales según rol (puede ampliarse) -->
+                    <div id="extraFieldsContainer"></div>
 
                     <!-- Sección adicional para datos usados en registro (no modificar las existentes) -->
                     <fieldset class="full">
@@ -237,7 +200,7 @@
                       </label>
                       <label>
                         Género
-                        <select name="genero" id="genero">
+                        <select name="sexo" id="sexo">
                           <option value="">-- Selecciona --</option>
                           <option value="mujer">Mujer</option>
                           <option value="hombre">Hombre</option>

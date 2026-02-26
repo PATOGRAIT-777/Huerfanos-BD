@@ -12,7 +12,7 @@
     const page = path.split("/").pop();
 
     // Páginas PÚBLICAS (No requieren login)
-    const publicPages = ['initPag.html', 'index.html', 'registro.html', 'formAgregar.html'];
+    const publicPages = ['initPag.html', 'formAgregar.html'];
 
     // --- CASO 1: NO LOGUEADO ---
     if (!token && !publicPages.includes(page)) {
@@ -37,12 +37,12 @@
 
         // A. Protección de Rutas ADMIN
         // Lista de páginas que SOLO un admin o médico puede ver
-        const adminPages = ['dashboard.html', 'pacientes.html', 'inventario.html', 'ordenes.html'];
+        const adminPages = ['dashboard.html'];
         
-        // Si la página actual es de admin Y el usuario es 'cliente'
-        if (adminPages.includes(page) && user.rol === 'cliente') {
+        // Si la página actual es de admin pero el usuario no tiene rol definido
+        if (adminPages.includes(page) && !user.rol) {
             alert("⛔ Acceso Denegado: Esta área es solo para personal.");
-            window.location.href = '../admin/citas.html'; // Lo mandamos a una página segura para clientes
+            window.location.href = '../admin/initPag.html';
             return;
         }
 

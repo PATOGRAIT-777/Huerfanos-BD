@@ -9,7 +9,10 @@ exports.register = async (req, res) => {
   try {
     const body = req.body || {};
     const {
-      role = 'cliente', usr, nombre, apellidos, curp, rfc,
+      rol = 'Director', // default profesión si no se envía
+      usr, nombre, apellidos, curp, rfc,
+      sexo, edad,
+      tipo_contrato = 'Empleado', // Empleado o Voluntario
       email, telefono, telefono2, calle_num, num_int,
       estado, municipio, colonia, cp,
       id_type, id_number
@@ -38,17 +41,22 @@ exports.register = async (req, res) => {
 
     const nombre_completo = ((nombre || '') + ' ' + (apellidos || '')).trim() || usr || email;
 
-    // Insertar Usuario
+    // Insertar Usuario (personal)
     const insertQ = `
       INSERT INTO usuarios
-      (email, password_hash, rol, nombre_completo, telefono, telefono_secundario, calle, num_exterior, num_interior, ubicacion_id, id_type, id_number)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-      RETURNING id, email, rol, nombre_completo
+      (email, password_hash, rol, nombre_completo, rfc, curp, sexo, edad, tipo_contrato,
+       telefono, telefono_secundario, calle, num_exterior, num_interior, ubicacion_id,
+       id_type, id_number, estatus)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+      RETURNING id, email, rol, nombre_completo, estatus
     `;
 
     const vals = [
-      email, passwordHash, role, nombre_completo, telefono || null, telefono2 || null,
-      calle_num || null, null, num_int || null, ubicacionId, id_type || null, id_number || null
+      email, passwordHash, rol, nombre_completo, rfc || null, curp || null,
+      sexo || null, edad || null, tipo_contrato,
+      telefono || null, telefono2 || null,
+      calle_num || null, null, num_int || null, ubicacionId,
+      id_type || null, id_number || null, 'Activo'
     ];
 
     const result = await db.query(insertQ, vals);
@@ -71,10 +79,14 @@ exports.login = async (req, res) => {
     const { email, password } = req.body || {};
     if (!email || !password) return res.status(400).json({ message: 'Datos incompletos' });
 
-    const q = await db.query('SELECT id, email, password_hash, rol, nombre_completo FROM usuarios WHERE email = $1', [email]);
+    const q = await db.query('SELECT id, email, password_hash, rol, nombre_completo, estatus FROM usuarios WHERE email = $1', [email]);
     if (q.rows.length === 0) return res.status(401).json({ message: 'Credenciales inválidas' });
 
     const user = q.rows[0];
+    if (user.estatus !== 'Activo') {
+      return res.status(403).json({ message: 'Usuario no activo' });
+    }
+
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) return res.status(401).json({ message: 'Credenciales inválidas' });
 
@@ -93,14 +105,18 @@ exports.login = async (req, res) => {
 // 3. OBTENER PERFIL 
 exports.getProfile = async (req, res) => {
   try {
-    const { id } = req.query; // Leemos ?id=... de la URL
+    // support query param, path param or token
+    let id = req.query.id || req.params.id;
+    if (!id && req.user && req.user.userId) {
+      id = req.user.userId;
+    }
     if (!id) return res.status(400).json({ message: 'Falta ID' });
 
     const query = `
       SELECT 
         u.nombre_completo, u.email, u.telefono, u.telefono_secundario,
         u.calle, u.num_exterior, u.num_interior, u.password_hash,
-        u.id_type, u.id_number,
+        u.id_type, u.id_number, u.rfc, u.curp, u.sexo, u.edad, u.tipo_contrato, u.rol, u.estatus,
         mx.codigo_postal, mx.estado, mx.municipio, mx.colonia
       FROM usuarios u
       LEFT JOIN mx_divisiones mx ON u.ubicacion_id = mx.id
@@ -121,6 +137,13 @@ exports.getProfile = async (req, res) => {
       num_interior: u.num_interior,
       id_type: u.id_type,
       id_number: u.id_number,
+      rfc: u.rfc,
+      curp: u.curp,
+      sexo: u.sexo,
+      edad: u.edad,
+      tipo_contrato: u.tipo_contrato,
+      rol: u.rol,
+      estatus: u.estatus,
       password_hash: u.password_hash, // Necesario para validar cambio de pass
       ubicacion: {
         codigo_postal: u.codigo_postal || '',
@@ -137,8 +160,10 @@ exports.getProfile = async (req, res) => {
 
 // 4. ACTUALIZAR PERFIL
 exports.updateUser = async (req, res) => {
-  // Lógica simple para actualizar datos básicos y ubicación
-  const { id, nombre_completo, telefono, telefono_secundario, calle, num_exterior, num_interior, id_type, id_number, estado, municipio, colonia } = req.body;
+  // Lógica para actualizar datos básicos y ubicación, así como campos de personal
+  const { id, nombre_completo, telefono, telefono_secundario, calle, num_exterior, num_interior,
+          id_type, id_number, estado, municipio, colonia,
+          rfc, curp, sexo, edad, tipo_contrato, rol, estatus } = req.body;
   try {
     // Buscar ID de ubicación
     let ubicacionId = null;
@@ -149,9 +174,20 @@ exports.updateUser = async (req, res) => {
 
     await db.query(`
       UPDATE usuarios SET 
-        nombre_completo=$1, telefono=$2, telefono_secundario=$3, calle=$4, num_exterior=$5, num_interior=$6, id_type=$7, id_number=$8, ubicacion_id=$9
-      WHERE id=$10
-    `, [nombre_completo, telefono, telefono_secundario, calle, num_exterior, num_interior, id_type, id_number, ubicacionId, id]);
+        nombre_completo=$1, telefono=$2, telefono_secundario=$3,
+        calle=$4, num_exterior=$5, num_interior=$6,
+        id_type=$7, id_number=$8, ubicacion_id=$9,
+        rfc=$10, curp=$11, sexo=$12, edad=$13,
+        tipo_contrato=$14, rol=$15, estatus=$16
+      WHERE id=$17
+    `, [
+      nombre_completo, telefono, telefono_secundario,
+      calle, num_exterior, num_interior,
+      id_type, id_number, ubicacionId,
+      rfc||null, curp||null, sexo||null, edad||null,
+      tipo_contrato||null, rol||null, estatus||null,
+      id
+    ]);
     
     res.json({ success: true, message: 'Actualizado' });
   } catch (err) {
@@ -223,5 +259,49 @@ exports.getUserPets = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error al cargar mascotas' });
+  }
+};
+
+// 6. LISTAR PERSONAL (Dashboard)
+exports.listUsers = async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT id, nombre_completo, rol, tipo_contrato, estatus, email
+       FROM usuarios
+       ORDER BY nombre_completo`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error listando usuarios:', err);
+    res.status(500).json({ message: 'Error interno' });
+  }
+};
+
+// 7. CAMBIAR ESTATUS (Activo/Inactivo)
+exports.changeStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estatus } = req.body;
+    if (!id || !estatus) return res.status(400).json({ message: 'Faltan parámetros' });
+
+    await db.query('UPDATE usuarios SET estatus=$1 WHERE id=$2', [estatus, id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error cambiando estatus:', err);
+    res.status(500).json({ success: false, message: 'Error interno' });
+  }
+};
+
+// 8. ELIMINAR USUARIO (Baja física)
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Falta ID' });
+
+    await db.query('DELETE FROM usuarios WHERE id=$1', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error eliminando usuario:', err);
+    res.status(500).json({ success: false, message: 'Error interno' });
   }
 };

@@ -48,15 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginMessage.style.color = 'green';
             }
 
-            // --- REDIRECCIÓN POR ROLES ---
+            // --- REDIRECCIÓN GENERAL ---
             setTimeout(() => {
-                const rol = data.user.rol || 'cliente';
-                if (['admin', 'medico', 'recepcionista'].includes(rol)) {
-                    // Ajusta la ruta si estás en carpeta 'admin' o raíz
-                    window.location.href = 'regUserAdmin.html'; 
-                } else {
-                    window.location.href = 'regUser.html';
-                }
+                // Para esta nueva dirección, siempre llevaremos al dashboard de personal
+                window.location.href = 'dashboard.html';
             }, 800);
 
           } else {
@@ -86,6 +81,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const formData = new FormData(registerForm);
+        // si hay fecha de nacimiento, calculamos edad
+        if(registerForm.fecha_nacimiento && registerForm.fecha_nacimiento.value) {
+            const bd = new Date(registerForm.fecha_nacimiento.value);
+            const now = new Date();
+            let age = now.getFullYear() - bd.getFullYear();
+            if(now < new Date(bd.getFullYear()+age, bd.getMonth(), bd.getDate())) age--;
+            formData.set('edad', age);
+        }
 
         try {
           const res = await fetch(`${API_URL}/register`, {
@@ -100,10 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('usuario', JSON.stringify(data.user));
             alert('¡Registro exitoso!');
             
-            // Redirección misma lógica
-            const rol = data.user.rol || 'cliente';
-            if (['admin', 'medico'].includes(rol)) window.location.href = 'regUserAdmin.html';
-            else window.location.href = 'regUser.html';
+            // después de registrarse siempre vamos al dashboard de personal
+            window.location.href = 'dashboard.html';
 
           } else {
             mostrarMensaje(regMessage, data.message || 'Error al registrarse', 'error');

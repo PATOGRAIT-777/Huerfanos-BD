@@ -18,29 +18,15 @@
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="../initPag.html">🐶 TechSide Vet</a>
+      <a class="brand" href="initPag.html">Gestión de Personal</a>
       <nav class="main-nav">
-        <a href="../initPag.html">Inicio</a>
+        <a href="initPag.html">Inicio</a>
         <a href="dashboard.html" class="active">Dashboard</a>
-        <a href="pacientes.html">Pacientes</a>
-        <a href="citas.html">Citas</a>
-        <a href="inventario.html">Inventario</a>
-        <a href="ordenes.html">Órdenes</a>
-          <a href="dashboard.html">Dashboard</a>
-          <a href="citas.html">Citas</a>
-          <a href="expedientes.html">Expedientes</a>
-          <a href="listas.html">Mis mascotas</a>
-          <a href="regPetAdmin.html">Registrar mascota</a>
-          <a href="pacientes.html">Pacientes</a>
-          <a href="horario.html">Horario</a>
-          <a href="inventario.html">Inventario</a>
-          <a href="ordenes.html">Órdenes</a>
-          <a href="prodCatalog.html">Tienda</a>
-          <a href="regUser.html">Mi cuenta</a>
+        <a href="formAgregar.html">Registrar personal</a>
       </nav>
       <div class="header-actions">
-        <button class="btn-ghost"><a href="formAgregar.html">Registrarse</a></button>
-        <button class="btn-primary" onclick="openLogin()">Entrar</button>
+        <span id="user-name-display" style="margin-right:12px;"></span>
+        <button class="btn-ghost" onclick="cerrarSesion()">Salir</button>
       </div>
     </div>
   </header>
@@ -49,46 +35,52 @@
     <aside class="sidebar" style="min-width:220px;max-width:260px">
       <nav class="sidebar-list">
         <a href="dashboard.html">Dashboard</a>
-        <a href="pacientes.html">Pacientes</a>
-        <a href="citas.html">Citas</a>
-        <a href="inventario.html">Inventario</a>
-        <a href="ordenes.html">Órdenes</a>
+        <a href="formAgregar.html">Nuevo personal</a>
       </nav>
     </aside>
 
     <main class="main" style="flex:1">
-      <h1>Panel administrativo</h1>
-      <p class="muted">Vista rápida de actividad y métricas.</p>
+      <h1>Listado de Personal</h1>
+      <p class="muted">Aquí puedes supervisar, consultar y administrar al equipo.</p>
 
-      <div class="admin-cards">
-        <div class="card-metric">
-          <h3>Citas hoy</h3>
-          <p style="font-size:24px">12</p>
-        </div>
-        <div class="card-metric">
-          <h3>Pacientes</h3>
-          <p style="font-size:24px">248</p>
-        </div>
-        <div class="card-metric">
-          <h3>Pedidos pendientes</h3>
-          <p style="font-size:24px">5</p>
-        </div>
-        <div class="card-metric">
-          <h3>Productos en stock</h3>
-          <p style="font-size:24px">134</p>
-        </div>
+      <!-- filtros -->
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        <label>Tipo:
+          <select id="filter-tipo">
+            <option value="">Todos</option>
+            <option value="Empleado">Empleado</option>
+            <option value="Voluntario">Voluntario</option>
+          </select>
+        </label>
+        <label>Rol:
+          <select id="filter-rol">
+            <option value="">Todos</option>
+            <option>Director</option>
+            <option>Coordinador</option>
+            <option>Psicólogo</option>
+            <option>Doctor</option>
+            <option>Abogado</option>
+            <option>Trabajador Social</option>
+            <option>Analista</option>
+          </select>
+        </label>
+        <button id="btn-new-personal" class="btn-primary">+ Nuevo personal</button>
       </div>
 
-      <section style="margin-top:24px">
-        <h2>Próximas citas</h2>
-        <table>
-          <thead><tr><th>Hora</th><th>Paciente</th><th>Dueño</th><th>Servicio</th><th>Sucursal</th><th>Doctor</th><th>Padecimiento</th><th>Estado</th></tr></thead>
-          <tbody id="dashboard-appointments-body">
-            <tr><td>09:30</td><td>Firulais</td><td>María G.</td><td>Consulta</td><td>Lindavista</td><td>Dr. Pérez</td><td>Otitis</td><td>Confirmada</td></tr>
-            <tr><td>10:00</td><td>Misu</td><td>Carlos R.</td><td>Vacunación</td><td>Centro</td><td>Dra. López</td><td>Vacunación</td><td>Pendiente</td></tr>
-          </tbody>
-        </table>
-      </section>
+      <table id="personal-table">
+        <thead>
+          <tr>
+            <th>Nombre completo</th>
+            <th>Rol</th>
+            <th>Tipo</th>
+            <th>Estatus</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Registros se insertarán aquí -->
+        </tbody>
+      </table>
     </main>
   </div>
 
@@ -99,26 +91,7 @@
     </div>
   </footer>
 
-  <div id="login-modal" class="login-modal" onclick="closeOnOutsideClick(event)">
-    <div class="login-content">
-      <span class="close" onclick="document.getElementById('login-modal').style.display='none'">&times;</span>
-      <form class="login-form">
-        <h2>Ingresar</h2>
-        <input type="text" placeholder="Usuario" required>
-        <input type="password" placeholder="Contraseña" required>
-        <button class="btn-primary">Entrar</button>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    function openLogin() { document.getElementById('login-modal').style.display = 'flex'; }
-    function closeLogin() { document.getElementById('login-modal').style.display = 'none'; }
-    function closeOnOutsideClick(event) {
-      const modal = document.getElementById('login-modal');
-      if (modal && !modal.querySelector('.login-content').contains(event.target)) closeLogin();
-    }
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
+  <script src="../js/session.js"></script>
+  <script src="../js/dashboard.js"></script>
 </body>
 </html>

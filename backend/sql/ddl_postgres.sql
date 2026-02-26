@@ -148,8 +148,17 @@ CREATE TABLE usuarios (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   email text UNIQUE NOT NULL,
   password_hash text NOT NULL,
-  rol text NOT NULL CHECK (rol IN ('cliente','medico','admin')),
+  -- En la nueva dirección, el campo "rol" representa la profesión/puesto
+  rol text NOT NULL CHECK (rol IN (
+      'Director','Coordinador','Psicólogo','Doctor','Abogado','Trabajador Social','Analista'
+  )),
   nombre_completo text NOT NULL,
+  rfc text,
+  curp text,
+  sexo text CHECK (sexo IN ('M','F','Otro')),
+  edad integer,
+  tipo_contrato text NOT NULL CHECK (tipo_contrato IN ('Empleado','Voluntario')),
+  estatus text NOT NULL CHECK (estatus IN ('Activo','Inactivo')) DEFAULT 'Activo',
   telefono text,
   telefono_secundario text,
   
