@@ -1,0 +1,11 @@
+// Datos de prueba (mientras conectamos PostgreSQL)
+const usuariosPrueba = [
+    { id: 1, nombre_completo: 'Juan Pérez', rol: 'Director', tipo: 'empleado', correo: 'juan@fundacion.org', activo: true },
+    { id: 2, nombre_completo: 'María López', rol: 'Psicóloga', tipo: 'empleado', correo: 'maria@fundacion.org', activo: true },
+    { id: 3, nombre_completo: 'Carlos Ruiz', rol: 'Voluntario', tipo: 'voluntario', correo: 'carlos@email.com', activo: false }
+];
+
+// Ruta para obtener todos los usuarios
+app.get('/api/usuarios', (req, res) => {
+    res.json(usuariosPrueba);
+});

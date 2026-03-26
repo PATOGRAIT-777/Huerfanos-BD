@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de Usuario</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .nav {
+            background-color: #3498db;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            margin-right: 10px;
+            border-radius: 3px;
+        }
+        .nav a:hover {
+            background-color: #2980b9;
+        }
+        .card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .card p {
+            margin: 10px 0;
+            font-size: 16px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+        .card strong {
+            color: #2c3e50;
+            width: 150px;
+            display: inline-block;
+        }
+        .estado-activo {
+            color: green;
+            font-weight: bold;
+        }
+        .estado-inactivo {
+            color: red;
+            font-weight: bold;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 10px 5px 0 0;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-volver {
+            background-color: #6c757d;
+        }
+        .btn-volver:hover {
+            background-color: #5a6268;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #666;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sistema de Gestión de Personal</h1>
+        
+        <div class="nav">
+            <a href="/">Listado</a>
+            <a href="/registro.html">Registrar Nuevo</a>
+        </div>
+
+        <h2>Detalle del Usuario</h2>
+        
+        <div id="contenido">
+            <div class="loading">Cargando datos del usuario...</div>
+        </div>
+        
+        <div id="acciones" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        // Obtener el ID de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        
+        if (!id) {
+            document.getElementById('contenido').innerHTML = 
+                '<div class="error">❌ Error: No se especificó ID de usuario</div>';
+        } else {
+            // Cargar datos del usuario
+            fetch(`/api/usuarios/${id}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Usuario no encontrado');
+                    }
+                    return response.json();
+                })
+                .then(usuario => {
+                    mostrarUsuario(usuario);
+                })
+                .catch(error => {
+                    document.getElementById('contenido').innerHTML = 
+                        `<div class="error">❌ Error: ${error.message}</div>`;
+                });
+        }
+        
+        function mostrarUsuario(u) {
+            // Formatear estado
+            const estadoHTML = u.activo ? 
+                '<span class="estado-activo">✅ Activo</span>' : 
+                '<span class="estado-inactivo">❌ Inactivo</span>';
+            
+            // Formatear fecha si existe
+            const fechaRegistro = u.fecha_registro ? 
+                new Date(u.fecha_registro).toLocaleDateString('es-MX') : 
+                'No disponible';
+            
+            const html = `
+                <div class="card">
+                    <p><strong>ID:</strong> ${u.id}</p>
+                    <p><strong>Nombre Completo:</strong> ${u.nombre_completo || 'No especificado'}</p>
+                    <p><strong>RFC:</strong> ${u.rfc || 'No especificado'}</p>
+                    <p><strong>CURP:</strong> ${u.curp || 'No especificado'}</p>
+                    <p><strong>Sexo:</strong> ${u.sexo === 'M' ? 'Masculino' : u.sexo === 'F' ? 'Femenino' : 'No especificado'}</p>
+                    <p><strong>Edad:</strong> ${u.edad || 'No especificada'}</p>
+                    <p><strong>Dirección:</strong> ${u.direccion || 'No especificada'}</p>
+                    <p><strong>Tipo:</strong> ${u.tipo}</p>
+                    <p><strong>Rol:</strong> ${u.rol}</p>
+                    <p><strong>Correo:</strong> ${u.correo}</p>
+                    <p><strong>Estado:</strong> ${estadoHTML}</p>
+                    <p><strong>Fecha de Registro:</strong> ${fechaRegistro}</p>
+                </div>
+            `;
+            
+            document.getElementById('contenido').innerHTML = html;
+            
+            // Agregar botones de acción
+            document.getElementById('acciones').innerHTML = `
+    <a href="/" class="btn btn-volver">← Volver al listado</a>
+    <a href="/editar-usuario.html?id=${u.id}" class="btn">✏️ Editar</a>
+    <button onclick="cambiarEstado(${u.id}, ${!u.activo})" class="btn">
+        ${u.activo ? '🔒 Revocar Acceso' : '🔓 Activar Acceso'}
+    </button>
+    <button onclick="eliminarUsuario(${u.id})" class="btn" style="background-color: #dc3545;">🗑️ Eliminar</button>
+`;
+        }
+        
+// Función para eliminar usuario
+async function eliminarUsuario(id) {
+    if (confirm('⚠️ ¿Estás SEGURO de eliminar este usuario? Esta acción no se puede deshacer.')) {
+        try {
+            const response = await fetch(`/api/usuarios/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                alert('✅ Usuario eliminado correctamente');
+                window.location.href = '/';
+            } else {
+                const error = await response.json();
+                alert(`❌ Error: ${error.error}`);
+            }
+        } catch (error) {
+            alert('❌ Error de conexión con el servidor');
+        }
+    }
+}
+// Función para cambiar estado (activar/revocar)
+async function cambiarEstado(id, nuevoEstado) {
+    if (confirm(`¿Estás seguro de ${nuevoEstado ? 'activar' : 'revocar el acceso de'} este usuario?`)) {
+        try {
+            const response = await fetch(`/api/usuarios/${id}/estado`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ activo: nuevoEstado })
+            });
+            
+            const resultado = await response.json();
+            
+            if (response.ok) {
+                alert(`✅ Acceso ${nuevoEstado ? 'activado' : 'revocado'} correctamente`);
+                location.reload();
+            } else {
+                alert(`❌ Error: ${resultado.error}`);
+            }
+        } catch (error) {
+            alert('❌ Error de conexión con el servidor');
+        }
+    }
+}
+    </script>
+</body>
+</html>
